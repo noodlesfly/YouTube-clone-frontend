@@ -1,25 +1,50 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import profileRule from '@/router/profile'
+import watchRule from '@/router/watch'
+import AppLayout from '@/layout/AppIndex.vue'
+import { store } from '@/store'
+import nprogress from 'nprogress'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    name: 'home',
-    component: HomeView
+    component: AppLayout,
+    children: [
+      {
+        path: '', // 默认子路由
+        name: 'home',
+        component: () => import(/* webpackChunkName:'home' */ '@/views/home/index.vue')
+      },
+      profileRule,
+      watchRule
+    ]
   },
   {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+    path: '/login',
+    name: 'login',
+    component: () => import(/* webpackChunkName:'home' */ '@/views/login/index.vue')
   }
 ]
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+
+router.beforeEach(to => {
+  if (to.meta.requiresAuth && !store.state.user) {
+    return {
+      path: '/login',
+      query: {
+        redirect: to.fullPath
+      }
+    }
+  }
+  nprogress.start()
+})
+
+router.afterEach(() => {
+  nprogress.done()
 })
 
 export default router
